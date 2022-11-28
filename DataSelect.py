@@ -22,7 +22,6 @@ class Plot:
          self.Monthly()
 
   def Hourly(self):
-      # self.df = pd.read_excel(r"C:\Users\vr198\OneDrive\Desktop\MDM3\Chemistry\LMR_VOCdata_97-19_DOW.xlsx", sheet_name=self.Year)
       Data = self.df["benzene"]
       print(Data.head())
       Benzene = self.df["benzene"]
@@ -40,7 +39,6 @@ class Plot:
       plt.show()
 
   def Daily(self):
-      # self.df = pd.read_excel(r"C:\Users\vr198\OneDrive\Desktop\MDM3\Chemistry\LMR_VOCdata_97-19_DOW.xlsx", sheet_name=self.Year,parse_dates=True)
       Data = self.df["benzene"]
       Date = self.df.index
       Benzene = self.df["benzene"]
@@ -58,7 +56,6 @@ class Plot:
       plt.show()
 
   def Weekly(self):
-      # self.df = pd.read_excel(r"C:\Users\vr198\OneDrive\Desktop\MDM3\Chemistry\LMR_VOCdata_97-19_DOW.xlsx", sheet_name=self.Year,parse_dates=['Datetime'])
       Data = self.df["benzene"]
       Date = self.df.index
       Benzene = self.df["benzene"]
@@ -75,7 +72,6 @@ class Plot:
       plt.show()
 
   def Monthly(self):
-      # self.df = pd.read_excel(r"C:\Users\vr198\OneDrive\Desktop\MDM3\Chemistry\LMR_VOCdata_97-19_DOW.xlsx", sheet_name=self.Year,parse_dates=['Datetime'])
       Data = self.df["benzene"]
       Date = self.df.index
       Benzene = self.df["benzene"]
