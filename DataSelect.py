@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
@@ -87,6 +88,70 @@ class Plot:
       plt.ylabel("Benzene emmision")
       plt.show()
 
+class vocData():
+    def __init__(self, csvdata="LMR_VOCdata_97-19_DOW.csv"):
+        self.data = pd.read_csv(
+            csvdata, na_values='No data', index_col="Datetime",
+            parse_dates=['Datetime'], infer_datetime_format=1)
+        self.units = ['year', 'month', 'dayofweek', 'hour']
+
+    def get_unit(self, unit, data=None):
+        if no(data):
+            data = self.data
+        unitindexes = getattr(self.data.index, unit)
+
+        if isinstance(unitindexes, type(self.get_unit)):
+            return unitindexes()
+        else:
+            return unitindexes
+
+
+    def select(self, timerange=None, mon_filter=None, dow_filter=None,
+               hr_filter=None):
+        if likelist(timerange):
+            if len(timerange)==2:
+                dataslice = self.data.loc[timerange[0]:timerange[1]]
+            elif len(timerange)==1:
+                dataslice = self.data.loc[timerange[0]]
+            else:
+                print("Range > 2 elements, haven't included functionality yet.")
+        elif likestr(timerange):
+            dataslice = self.data.loc[timerange]
+        else:
+            dataslice = self.data
+
+        for i, f in enumerate((mon_filter, dow_filter, hr_filter)):
+            if notNon(f):
+                dataslice = self._filtbyunit(dataslice, f, self.units[i+1])
+
+        return dataslice
+
+    def _filtbyunit(self, data, unitfilter, unit):
+        unitindexes = getattr(data.index, unit)
+        if likelist(unitfilter):
+            locs = [unitindexes==u for u in unitfilter]
+            loc = np.any(locs, 0)
+        elif unitfilter is None:
+            loc = slice(None)
+        else:
+            loc = unitindexes==unitfilter
+
+        return data[loc]
+
+
+def likelist(item):
+    return type(item)==tuple or type(item)==list
+
+def likestr(item):
+    return type(item)==str
+
+def notNon(item):
+    return item is not None
+
+def no(item):
+    return item is None
+
+
 #Enter selected year and time window
-p1 = Plot("2015", "Daily")
-p1.HourDayWeek()
+# p1 = Plot("2015", "Daily")
+# p1.HourDayWeek()
