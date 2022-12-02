@@ -90,9 +90,26 @@ class Plot:
 
 class vocData():
     def __init__(self, csvdata="LMR_VOCdata_97-19_DOW.csv"):
+        """
+        Time series data object with extended data filtering capabilities.
+
+        Parameters
+        ----------
+        csvdata : .csv, optional
+            VOC/time series data used. Must have 'Datetime' column with
+            correctly formatted dates.
+            The default is "LMR_VOCdata_97-19_DOW.csv".
+
+        Returns
+        -------
+        vocData object.
+
+        """
+        # TODO: BETTER TO INHERET from pandas dataframe class first
         self.data = pd.read_csv(
             csvdata, na_values='No data', index_col="Datetime",
             parse_dates=['Datetime'], infer_datetime_format=1)
+
         self.units = ['year', 'month', 'dayofweek', 'hour']
 
     def get_unit(self, unit, data=None):
@@ -108,6 +125,26 @@ class vocData():
 
     def select(self, timerange=None, mon_filter=None, dow_filter=None,
                hr_filter=None):
+        """
+        Selects
+
+        Parameters
+        ----------
+        timerange : TYPE, optional
+            DESCRIPTION. The default is None.
+        mon_filter : TYPE, optional
+            DESCRIPTION. The default is None.
+        dow_filter : TYPE, optional
+            DESCRIPTION. The default is None.
+        hr_filter : TYPE, optional
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        dataslice : TYPE
+            DESCRIPTION.
+
+        """
         if likelist(timerange):
             if len(timerange)==2:
                 dataslice = self.data.loc[timerange[0]:timerange[1]]
@@ -125,6 +162,28 @@ class vocData():
                 dataslice = self._filtbyunit(dataslice, f, self.units[i+1])
 
         return dataslice
+
+    def group_by(self, unit=None, data=None, aggmethod='mean'):
+        """
+
+
+        Parameters
+        ----------
+        data : TYPE, optional
+            DESCRIPTION. The default is None.
+        unit : {'Y', 'M', 'W', 'D'}, optional
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
+        if no(data):
+            data = self.data
+
+        groups = data.index.to_series().dt.to_period(unit)
+        return data.groupby(groups).agg(aggmethod)
 
     def _filtbyunit(self, data, unitfilter, unit):
         unitindexes = getattr(data.index, unit)
