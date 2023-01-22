@@ -130,3 +130,7 @@ dmypy.json
 
 # Other Python Files
 .DS_Store
+
+# PERSONAL FILES
+Correlation.py
+TEST.py
