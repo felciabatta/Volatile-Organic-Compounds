@@ -7,6 +7,8 @@ import matplotlib as mpl
 import seaborn as sns
 from scipy import stats as st
 
+from typing import List, Union, Literal
+
 
 class Plot:
     def __init__(self, Year, View):
@@ -143,12 +145,12 @@ class vocData():
         else:
             return unitindexes
 
-    def select(self, timerange: (str, list) = None,
-               mon_filter: (int, list) = None,
-               dow_filter: (int, list) = None,
-               hr_filter: (int, list) = None,
-               groupby: {'Y', 'M', 'D'}=None,
-               aggmethod: {'mean', 'sum'}='mean') -> pd.DataFrame:
+    def select(self, timerange: Union[str, List[str]] = None,
+               mon_filter: Union[int, List[int]] = None,
+               dow_filter: Union[int, List[int]] = None,
+               hr_filter: Union[int, List[int]] = None,
+               groupby: Literal['Y', 'M', 'D'] = None,
+               aggmethod: Literal['mean', 'sum'] = 'mean') -> pd.DataFrame:
         """Select, filter and group data.
 
         Select data within timerange, subject to filter by month, day of week or hour.
