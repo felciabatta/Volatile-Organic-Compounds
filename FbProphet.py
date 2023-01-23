@@ -10,39 +10,62 @@ from prophet.plot import add_changepoints_to_plot
 from DataSelect import vocData
 
 
-# df = pd.read_excel(r"C:\Users\vr198\OneDrive\Desktop\MDM3\Chemistry\Volatile-Organic-Compounds\LMR_VOCdata.xlsx", sheet_name="2015",parse_dates=['DateTime'])
-# Data = df[["DateTime","benzene"]]
-# Data = Data.rename({'DateTime': 'ds', 'benzene': 'y'}, axis='columns')
-# Data = pd.DataFrame(Data)
-# Data.dropna(
-#     axis=0,
-#     inplace=True
-# )
+VOCs = ['benzene','toluene']
+for i in VOCs:
+    data = vocData() #initialise data class
+    data.data # all the data
+    datasubset = data.select(["2000-02 13", "2020-01"])[i].to_frame() # selects
+    datasubset = data._group_by('D', datasubset)
+    datasubset['ds'] = datasubset.index.to_series()
+    datasubset = datasubset.rename({i: 'y'}, axis='columns')
+    datasubset = datasubset[["ds","y"]]
+    m = Prophet(changepoint_prior_scale=0.5)
+    m.fit(datasubset)
+    future = m.make_future_dataframe(periods=0, freq='D')
+    forecast = m.predict(future)
+    dataset = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+    m.plot(dataset)
+    #m.plot_components(dataset)
+    #plot_components_plotly(m, dataset)   
+    plot_plotly(m, dataset)
+    #print(datasubset.head(50))
+    #print(List)
+    if i == VOCs[0]:
+        dataOne = dataset['yhat']
+    if i == VOCs[1]:
+        dataTwo = dataset['yhat']
 
-data = vocData() #initialise data class
-data.data # all the data
-datasubset = data.select(timerange=None, dow_filter=(4))['benzene'].to_frame() # selects
-datasubset = data.group_by('D', datasubset)
-datasubset['ds'] = datasubset.index.to_series()
-datasubset = datasubset.rename({'benzene': 'y'}, axis='columns')
-datasubset = datasubset[["ds","y"]]
 
-print(datasubset.head(50))
+frames = [dataOne,dataTwo]
+result = pd.concat(frames, axis=1)
+result.columns = ['col1', 'col2']
+print(result)
+result = result.dropna()
+result['col1']=result['col1'].pct_change()
+result['col2']=result['col2'].pct_change()
+plt.figure()
+plt.scatter(result['col1'], result['col2'])
+correlation = result['col1'].corr(result['col2'])
+print('correlation is:',correlation)
+
+
+
 
 
 #"--ADDING CHANGEPOINT PARAMETER--"
 #"By default, this parameter is set to 0.05"
 #"Decreasing parameter will make the trend less flexible, undefit"
 
-m = Prophet(changepoint_prior_scale=0.5)
-m.fit(datasubset)
-future = m.make_future_dataframe(periods=10, freq='D')
-forecast = m.predict(future)
-forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
-m.plot(forecast)
-m.plot_components(forecast)
-plot_components_plotly(m, forecast)   
-plot_plotly(m, forecast)
+#m = Prophet(changepoint_prior_scale=0.5)
+#m.fit(datasubset)
+#future = m.make_future_dataframe(periods=0, freq='D')
+#forecast = m.predict(future)
+#forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
+
+#m.plot(forecast)
+#m.plot_components(forecast)
+#plot_components_plotly(m, forecast)   
+#plot_plotly(m, forecast)
 
 
 
