@@ -330,6 +330,7 @@ class vocData():
         return corr
 
     def ratio(self, col1, col2, data=None, inv=False, plot=False):
+        # give log of ratios
         if no(data):
             data = self.data
         if inv:
