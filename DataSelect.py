@@ -339,10 +339,11 @@ class vocData():
             data1 = data[col1]
             data2 = data[col2]
         q = data1/data2
+        logq = np.log()
 
         if plot:
-            self.scatter(q, title=data1.name+':'+data2.name)
-        return q
+            self.scatter(logq, title=data1.name+':'+data2.name)
+        return logq
 
     def scatter(self, data=None, title=None):
         if no(data):
