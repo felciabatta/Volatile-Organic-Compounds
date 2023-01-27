@@ -149,7 +149,7 @@ class vocData():
                mon_filter: Union[int, List[int]] = None,
                dow_filter: Union[int, List[int]] = None,
                hr_filter: Union[int, List[int]] = None,
-               groupby: Literal['Y', 'M', 'D'] = None,
+               groupby: Literal['Y', 'M', 'W', 'D', 'H'] = None,
                aggmethod: Literal['mean', 'sum'] = 'mean') -> pd.DataFrame:
         """Select, filter and group data.
 
@@ -174,7 +174,7 @@ class vocData():
             In addition to time range selection, filter out only specific hour of day.
             e.g. `13` will extract all 1pms only.
             The default is None, extracting all hours.
-        groupby : {'Y', 'M', 'D'}, optional
+        groupby : {'Y', 'M', 'W', 'D', 'H'}, optional
             Aggregates by grouping of year `'Y'`, month `'M'` or day `'D'`, according to `aggmethod`.
             The default is None.
         aggmethod : {'mean', 'sum'}, optional
@@ -234,7 +234,7 @@ class vocData():
         ----------
         data : TYPE, optional
             DESCRIPTION. The default is None.
-        unit : {'Y', 'M', 'W', 'D'}, optional
+        unit : {'Y', 'M', 'W', 'D', 'H'}, optional
             DESCRIPTION. The default is None.
 
         Returns
