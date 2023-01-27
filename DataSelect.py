@@ -393,9 +393,9 @@ VOCS = ['Nitric oxide',
         'n-pentane',
         '1,3-butadiene',
         'trans-2-pentene',
-        'cis-2-pentene (VOC-AIR only)', # ONLY TO 2005
+        # 'cis-2-pentene (VOC-AIR only)', # ONLY TO 2005
         '2-methylpentane',
-        '3-methylpentane (VOC-AIR only)', # ONLY TO 2005
+        # '3-methylpentane (VOC-AIR only)', # ONLY TO 2005
         'isoprene',
         'n-hexane',
         'n-heptane',
