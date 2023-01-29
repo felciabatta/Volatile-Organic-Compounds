@@ -7,72 +7,73 @@ from prophet.plot import plot_plotly, plot_components_plotly
 from prophet.plot import add_changepoints_to_plot
 from DataSelect import vocData
 from prophet.plot import plot_yearly, plot_weekly, plot_seasonality
+import numpy as np
+
+data = vocData()
 
 class FbProphetCorrelation():
-    data = vocData()
-    
-    def __init__(self, VOC1, VOC2):
+    def __init__(self, VOC1, VOC2, data=data):
         self.VOC1 = VOC1
         self.VOC2 = VOC2
+        self.data = data
     
-    def DataSubset(self):
-        VOC = [self.VOC1,self.VOC2]
-        frames = [0, 0]
+    def fit(self, *dataselect_args, log=False, **dataselect_kwargs):
+        VOC = [self.VOC1, self.VOC2]
+        frames = np.empty(2, pd.DataFrame) # output data
+        m = np.empty(2, Prophet) # model
+        components = np.empty(2, pd.DataFrame)
         for i, voc in enumerate(VOC):
-            self.data.data # all the data
-            datasubset = self.data.select(["2000-02", "2000-04"])[''+voc+''].to_frame() # selects
-            datasubset = self.data._group_by('H', datasubset)
+            # prepare dataframe
+            datasubset = self.data.select(*dataselect_args, **dataselect_kwargs)[voc].to_frame()
             datasubset['ds'] = datasubset.index.to_series()
             datasubset = datasubset.rename({voc: 'y'}, axis='columns')
-            datasubset = datasubset[["ds","y"]]
-            m = Prophet(yearly_seasonality=10)
-            m.add_seasonality(name='monthly', period=30.5, fourier_order=5)
-            m.add_seasonality(name='weekly', period=7, fourier_order=3)
-            m.add_seasonality(name='daily', period=1, fourier_order=5)
-            m.fit(datasubset)
-            df = m.history
-            plot_yearly(m)
-            plot_weekly(m)
-            plot_seasonality(m, name='monthly')
-            plot_seasonality(m, name='daily')
-            print(m)
-            
+            datasubset = datasubset[['ds','y']]
+            if log:
+                datasubset['y'] = np.log(datasubset['y'])
+            # fit model in prophet
+            m[i] = Prophet(yearly_seasonality=6, weekly_seasonality=3, daily_seasonality=False)
+            # doesn't make sense to include monthly
+            # m[i].add_seasonality(name='monthly', period=30.5, fourier_order=5)
+            if 'groupby' in dataselect_kwargs.keys():
+                if dataselect_kwargs['groupby'] == 'H':
+                    m[i].add_seasonality(name='daily', period=1, fourier_order=5)
+            else:
+                m[i].add_seasonality(name='daily', period=1, fourier_order=5)
+            m[i].fit(datasubset)
+            # extract components
+            df = m[i].history
+            components[i] = m[i].predict(df)
+            m[i].plot(components[i])
+            plt.title(voc)
+            m[i].plot_components(components[i])
+            # plt.title(voc)
+            # save df for additional use
             frames[i] = df['y']
+        
+        frames = pd.concat(frames, axis=1)
+        frames.columns = ['col1', 'col2']
+        return frames, m, components
             
-        #     if i == VOC[0]:
-        #         DataSet1 = df['y']
-        #     if i == VOC[1]:
-        #         DataSet2 = df['y']
-        # frames = [DataSet1,DataSet2]
-        result = pd.concat(frames, axis=1)
-        result.columns = ['col1', 'col2']
-        return result
-            
-    def Correlation(self):
-        Datasets = CombinationOne.DataSubset()
-        Datasets = Datasets.dropna()
-        Datasets['col1']=Datasets['col1'].pct_change()
-        Datasets['col2']=Datasets['col2'].pct_change()
+    def Correlation(self, fitted_data):
+        fitted_data = fitted_data.dropna()
+        # find percent change
+        fitted_data['col1']=fitted_data['col1'].pct_change()
+        fitted_data['col2']=fitted_data['col2'].pct_change()
+        # plot
         plt.figure()
-        plt.scatter(Datasets['col1'], Datasets['col2'])
-        correlation = Datasets['col1'].corr(Datasets['col2'])
+        plt.scatter(fitted_data['col1'], fitted_data['col2'])
+        correlation = fitted_data['col1'].corr(fitted_data['col2'])
         print('correlation is:',correlation)
-        
-        
-        
-        
-        
-        
-        
+
 CombinationOne = FbProphetCorrelation('benzene','toluene')
-Datasets = CombinationOne.DataSubset()
-BenTolCorr = CombinationOne.Correlation()
+fitted, m, components = CombinationOne.fit(log=True, groupby='H')
+# BenTolCorr = CombinationOne.Correlation(fitted_data)
 
 
-print(CombinationOne.VOC1)
-print(CombinationOne.VOC2)
-print(Datasets)
-print(BenTolCorr)
+# print(CombinationOne.VOC1)
+# print(CombinationOne.VOC2)
+# print(Datasets)
+# print(BenTolCorr)
 
 
 
