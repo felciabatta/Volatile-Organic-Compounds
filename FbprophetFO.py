@@ -42,14 +42,18 @@ class FbProphetCorrelation():
             m[i].fit(datasubset)
             # extract components
             df = m[i].history
-            components[i] = m[i].predict(df)
+
+            daterange = pd.date_range(min(df.ds), max(df.ds), freq='D').to_frame()
+            daterange.columns = ['ds']
+
+            components[i] = m[i].predict(daterange)
             m[i].plot(components[i])
             plt.title(voc)
             m[i].plot_components(components[i])
             # plt.title(voc)
         return m, components
             
-    def Correlation(self, fitted_data1, fitted_data2, pct_freq='D'):
+    def Correlation(self, fitted_data1, fitted_data2, log=False, pct_freq='D'):
         # set datetime index, if needed
         if 'ds' in fitted_data1.columns:
             fitted_data1 = fitted_data1.set_index(['ds'])
@@ -60,24 +64,34 @@ class FbProphetCorrelation():
         fitted_data1.columns = ['col1']
         fitted_data2.columns = ['col2']
         percent_change = pd.concat([fitted_data1, fitted_data2], axis=1)
-        percent_change.dropna(inplace=True)
+        # percent_change.dropna(inplace=True)
         # find percent change
-        percent_change['col1'] = percent_change['col1'].pct_change(freq=pct_freq)
-        percent_change['col2'] = percent_change['col2'].pct_change(freq=pct_freq)
+        if not log:
+            percent_change.col1 = percent_change.col1.pct_change(freq=pct_freq)
+            percent_change.col2 = percent_change.col2.pct_change(freq=pct_freq)
+        else:
+            percent_change.col1 = percent_change.col1.diff()
+            percent_change.col2 = percent_change.col2.diff()
 
         percent_change
 
         # plot
         plt.figure()
-        plt.scatter(percent_change['col1'], percent_change['col2'])
-        correlation = percent_change['col1'].corr(percent_change['col2'])
-        print('correlation is:',correlation)
+        plt.scatter(percent_change.col1, percent_change.col2)
+        correlation = percent_change.col1.corr(percent_change.col2)
+        plt.figure()
+        plt.plot(percent_change.col1)
+
+        plt.figure()
+        plt.plot(percent_change.col2)
+        print('correlation is:', correlation)
     
         return correlation, percent_change
 
 CombinationOne = FbProphetCorrelation('benzene','toluene')
 m, components = CombinationOne.fit(log=True, groupby='D')
-BenTolCorr, pchange = CombinationOne.Correlation(components[0][['ds','trend']], components[1][['ds','trend']])
+BenTolCorr, pchange = CombinationOne.Correlation(
+    components[0][['ds','trend']], components[1][['ds','trend']], log=True)
 
 
 # print(CombinationOne.VOC1)
