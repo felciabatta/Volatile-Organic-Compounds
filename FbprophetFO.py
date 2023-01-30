@@ -17,7 +17,7 @@ class FbProphetCorrelation():
         self.VOC2 = VOC2
         self.data = data
     
-    def fit(self, *dataselect_args, log=False, **dataselect_kwargs):
+    def fit(self, *dataselect_args, log=False, plot=False, **dataselect_kwargs):
         VOC = [self.VOC1, self.VOC2]
         OGframes = np.empty(2, pd.DataFrame) # output data
         m = np.empty(2, Prophet) # model
@@ -47,13 +47,14 @@ class FbProphetCorrelation():
             daterange.columns = ['ds']
 
             components[i] = m[i].predict(daterange)
-            m[i].plot(components[i])
-            plt.title(voc)
-            m[i].plot_components(components[i])
+            if plot:
+                m[i].plot(components[i])
+                plt.title(voc)
+                m[i].plot_components(components[i])
             # plt.title(voc)
         return m, components
             
-    def Correlation(self, fitted_data1, fitted_data2, log=False, pct_freq='D'):
+    def Correlation(self, fitted_data1, fitted_data2, log=False, plot=False, pct_freq='D'):
         # set datetime index, if needed
         if 'ds' in fitted_data1.columns:
             fitted_data1 = fitted_data1.set_index(['ds'])
@@ -73,32 +74,26 @@ class FbProphetCorrelation():
             percent_change.col1 = percent_change.col1.diff()
             percent_change.col2 = percent_change.col2.diff()
 
-        percent_change
-
-        # plot
-        plt.figure()
-        plt.scatter(percent_change.col1, percent_change.col2)
         correlation = percent_change.col1.corr(percent_change.col2)
-        plt.figure()
-        plt.plot(percent_change.col1)
 
-        plt.figure()
-        plt.plot(percent_change.col2)
-        print('correlation is:', correlation)
+        if plot:
+            # plot
+            plt.figure()
+            plt.scatter(percent_change.col1, percent_change.col2)
+            
+            plt.figure()
+            plt.plot(percent_change.col1)
+
+            plt.figure()
+            plt.plot(percent_change.col2)
+            print('correlation is:', correlation)
     
         return correlation, percent_change
 
 CombinationOne = FbProphetCorrelation('benzene','toluene')
-m, components = CombinationOne.fit(log=True, groupby='D')
+m, components = CombinationOne.fit(log=True, plot=False, groupby='D')
 BenTolCorr, pchange = CombinationOne.Correlation(
-    components[0][['ds','trend']], components[1][['ds','trend']], log=True)
-
-
-# print(CombinationOne.VOC1)
-# print(CombinationOne.VOC2)
-# print(Datasets)
-# print(BenTolCorr)
-
+    components[0][['ds','weekly']], components[1][['ds','weekly']], log=True, plot=False)
 
 
 #m = Prophet(weekly_seasonality=False) 
