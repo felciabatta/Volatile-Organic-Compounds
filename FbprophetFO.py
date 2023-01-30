@@ -12,14 +12,14 @@ import numpy as np
 data = vocData()
 
 class FbProphetCorrelation():
-    def __init__(self, VOC1, VOC2, data=data):
+    def __init__(self, VOC1='benzene', VOC2='toluene', data=data):
         self.VOC1 = VOC1
         self.VOC2 = VOC2
         self.data = data
     
     def fit(self, *dataselect_args, log=False, **dataselect_kwargs):
         VOC = [self.VOC1, self.VOC2]
-        frames = np.empty(2, pd.DataFrame) # output data
+        OGframes = np.empty(2, pd.DataFrame) # output data
         m = np.empty(2, Prophet) # model
         components = np.empty(2, pd.DataFrame)
         for i, voc in enumerate(VOC):
@@ -47,27 +47,37 @@ class FbProphetCorrelation():
             plt.title(voc)
             m[i].plot_components(components[i])
             # plt.title(voc)
-            # save df for additional use
-            frames[i] = df['y']
-        
-        frames = pd.concat(frames, axis=1)
-        frames.columns = ['col1', 'col2']
-        return frames, m, components
+        return m, components
             
-    def Correlation(self, fitted_data):
-        fitted_data = fitted_data.dropna()
+    def Correlation(self, fitted_data1, fitted_data2, pct_freq='D'):
+        # set datetime index, if needed
+        if 'ds' in fitted_data1.columns:
+            fitted_data1 = fitted_data1.set_index(['ds'])
+        if 'ds' in fitted_data2.columns:
+            fitted_data2 = fitted_data2.set_index(['ds'])
+
+        # change columns names so not the same
+        fitted_data1.columns = ['col1']
+        fitted_data2.columns = ['col2']
+        percent_change = pd.concat([fitted_data1, fitted_data2], axis=1)
+        percent_change.dropna(inplace=True)
         # find percent change
-        fitted_data['col1']=fitted_data['col1'].pct_change()
-        fitted_data['col2']=fitted_data['col2'].pct_change()
+        percent_change['col1'] = percent_change['col1'].pct_change(freq=pct_freq)
+        percent_change['col2'] = percent_change['col2'].pct_change(freq=pct_freq)
+
+        percent_change
+
         # plot
         plt.figure()
-        plt.scatter(fitted_data['col1'], fitted_data['col2'])
-        correlation = fitted_data['col1'].corr(fitted_data['col2'])
+        plt.scatter(percent_change['col1'], percent_change['col2'])
+        correlation = percent_change['col1'].corr(percent_change['col2'])
         print('correlation is:',correlation)
+    
+        return correlation, percent_change
 
 CombinationOne = FbProphetCorrelation('benzene','toluene')
-fitted, m, components = CombinationOne.fit(log=True, groupby='H')
-# BenTolCorr = CombinationOne.Correlation(fitted_data)
+m, components = CombinationOne.fit(log=True, groupby='D')
+BenTolCorr, pchange = CombinationOne.Correlation(components[0][['ds','trend']], components[1][['ds','trend']])
 
 
 # print(CombinationOne.VOC1)
