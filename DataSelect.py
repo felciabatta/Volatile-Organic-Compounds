@@ -1,102 +1,15 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from datetime import datetime
-from sklearn.linear_model import LinearRegression
+import numpy as np
+from scipy import stats as st
+from prophet import Prophet
+
+import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
-from scipy import stats as st
 
+import pickle
 from typing import List, Union, Literal
-
-
-class Plot:
-    def __init__(self, Year, View):
-        self.Year = Year
-        self.View = View
-        self.df = pd.read_csv("LMR_VOCdata_97-19_DOW.csv", na_values='No data',
-                              index_col="Datetime",
-                              parse_dates=['Datetime'], infer_datetime_format=1)
-        self.df = self.df[self.Year]
-
-    def HourDayWeek(self):
-        if self.View == "Hourly":
-            self.Hourly()
-        elif self.View == "Daily":
-            self.Daily()
-        elif self.View == "Weekly":
-            self.Weekly()
-        elif self.View == "Monthly":
-            self.Monthly()
-
-    def Hourly(self):
-        Data = self.df["benzene"]
-        print(Data.head())
-        Benzene = self.df["benzene"]
-        Date = self.df.index
-
-        # Data.dropna(
-        #     axis=0,
-        #     inplace=True
-        #   )
-
-        plt.scatter(Date, Benzene, s=1)
-        plt.title("Hourly Benzene level for" + ' ' + self.Year)
-        plt.xlabel("Hourly")
-        plt.ylabel("Benzene emmision")
-        plt.show()
-
-    def Daily(self):
-        Data = self.df["benzene"]
-        Date = self.df.index
-        Benzene = self.df["benzene"]
-        # Data.dropna(
-        #     axis=0,
-        #     inplace=True
-        # )
-        print(Data.head(50))
-        Data = Data.groupby(Data.index.to_frame(
-        ).Datetime.dt.to_period('D')).agg('sum')
-        print(Data.head(50))
-        Data.plot()
-        plt.title("Daily Benzene level for" + ' ' + self.Year)
-        plt.xlabel("Daily")
-        plt.ylabel("Benzene emmision")
-        plt.show()
-
-    def Weekly(self):
-        Data = self.df["benzene"]
-        Date = self.df.index
-        Benzene = self.df["benzene"]
-        # Data.dropna(
-        #     axis=0,
-        #     inplace=True
-        # )
-        print(Data.head(50))
-        Data = Data.groupby(Data.index.to_frame(
-        ).Datetime.dt.to_period('W')).agg('sum')
-        Data.plot()
-        plt.title("Weekly Benzene level for" + ' ' + self.Year)
-        plt.xlabel("Weekly")
-        plt.ylabel("Benzene emmision")
-        plt.show()
-
-    def Monthly(self):
-        Data = self.df["benzene"]
-        Date = self.df.index
-        Benzene = self.df["benzene"]
-        # Data.dropna(
-        #     axis=0,
-        #     inplace=True
-        # )
-        print(Data.head(50))
-        Data = Data.groupby(Data.index.to_frame(
-        ).Datetime.dt.to_period('M')).agg('sum')
-        Data.plot()
-        plt.title("Monthly Benzene level for" + ' ' + self.Year)
-        plt.xlabel("Month")
-        plt.ylabel("Benzene emmision")
-        plt.show()
 
 
 class vocData():
@@ -265,7 +178,91 @@ class vocData():
 
         return data[loc]
 
-    def corrmat(self, data=None, H0=0, tail='up', plot=0, sort_index=None):
+    def fit(self, *dataselect_args, voc='benzene', log=False, plot=False, save=False, **dataselect_kwargs):
+        # set groupby variable
+        if 'groupby' in dataselect_kwargs.keys():
+            groupby = dataselect_kwargs['groupby']
+        else:
+            groupby = 'H'
+        
+        # prepare dataframe
+        data = self.select(*dataselect_args, **dataselect_kwargs)[voc].to_frame()
+        data['ds'] = data.index.to_series() # create ds col
+        data = data.rename({voc: 'y'}, axis='columns') # rename data col
+        data = data[['ds','y']] # extract relevant cols
+        # log data if specified
+        if log:
+            data['y'] = np.log(data['y'])
+
+        # initiate model in prophet
+        m = Prophet(yearly_seasonality=6, weekly_seasonality=3, daily_seasonality=False)
+        # add daily seasonality if possible
+        if groupby == 'H':
+            m.add_seasonality(name='daily', period=1, fourier_order=5)
+
+        # fit model
+        m.fit(data)
+
+        # generate daterane
+        ds = m.history.ds # original (incomplete) dates
+        daterange = pd.date_range(min(ds), max(ds), freq='D').to_frame()
+        daterange.columns = ['ds']
+
+        # extract components
+        components = m.predict(daterange)
+
+        # plot
+        if plot:
+            m.plot(components)
+            plt.title(voc)
+            m.plot_components(components)
+        # plt.title(voc)
+
+        # save
+        if save:
+            components.to_csv('Results/'+voc+'_components_fittedby_'+groupby+'.csv', na_rep="NaN")
+            with open('Results/'+voc+'_model_fittedby_'+groupby+'.pkl', 'wb') as outp:
+                pickle.dump(m, outp, pickle.HIGHEST_PROTOCOL)
+        return m, components
+
+    def pct_corr(self, fitted_data1, fitted_data2, log=False, plot=False, pct_freq='D'):
+        # set datetime index, if needed
+        if 'ds' in fitted_data1.columns:
+            fitted_data1 = fitted_data1.set_index(['ds'])
+        if 'ds' in fitted_data2.columns:
+            fitted_data2 = fitted_data2.set_index(['ds'])
+
+        # change columns names so not the same
+        fitted_data1.columns = ['col1']
+        fitted_data2.columns = ['col2']
+        percent_change = pd.concat([fitted_data1, fitted_data2], axis=1)
+        # percent_change.dropna(inplace=True)
+        # find percent change
+        if not log:
+            percent_change.col1 = percent_change.col1.pct_change(freq=pct_freq)
+            percent_change.col2 = percent_change.col2.pct_change(freq=pct_freq)
+        else:
+            percent_change.col1 = percent_change.col1.diff()
+            percent_change.col2 = percent_change.col2.diff()
+
+        correlation = percent_change.col1.corr(percent_change.col2)
+
+        if plot:
+            # plot
+            plt.figure()
+            plt.scatter(percent_change.col1, percent_change.col2)
+            
+            plt.figure()
+            plt.plot(percent_change.col1)
+
+            plt.figure()
+            plt.plot(percent_change.col2)
+            print('correlation is:', correlation)
+
+        return correlation, percent_change
+
+    def _corrmat(self, data=None, H0=0, tail='up', plot=0, sort_index=None):
+        """DEPRECATED"""
         if no(data):
             data = self.data
         # correlation matrix
@@ -315,7 +312,8 @@ class vocData():
                         xticklabels=True, yticklabels=True)
         return corr, p, significant, sort_index
 
-    def correlate(self, col1, col2, data=None, plot=False):
+    def _correlate(self, col1, col2, data=None, plot=False):
+        """DEPRECATED"""
         if no(data):
             data = self.data
         data1 = data[col1]
@@ -412,3 +410,93 @@ VOCS = ['Nitric oxide',
 # Enter selected year and time window
 # p1 = Plot("2015", "Daily")
 # p1.HourDayWeek()
+
+
+class _Plot:
+    """DEPRECATED"""
+    def __init__(self, Year, View):
+        self.Year = Year
+        self.View = View
+        self.df = pd.read_csv("LMR_VOCdata_97-19_DOW.csv", na_values='No data',
+                              index_col="Datetime",
+                              parse_dates=['Datetime'], infer_datetime_format=1)
+        self.df = self.df[self.Year]
+
+    def HourDayWeek(self):
+        if self.View == "Hourly":
+            self.Hourly()
+        elif self.View == "Daily":
+            self.Daily()
+        elif self.View == "Weekly":
+            self.Weekly()
+        elif self.View == "Monthly":
+            self.Monthly()
+
+    def Hourly(self):
+        Data = self.df["benzene"]
+        print(Data.head())
+        Benzene = self.df["benzene"]
+        Date = self.df.index
+
+        # Data.dropna(
+        #     axis=0,
+        #     inplace=True
+        #   )
+
+        plt.scatter(Date, Benzene, s=1)
+        plt.title("Hourly Benzene level for" + ' ' + self.Year)
+        plt.xlabel("Hourly")
+        plt.ylabel("Benzene emmision")
+        plt.show()
+
+    def Daily(self):
+        Data = self.df["benzene"]
+        Date = self.df.index
+        Benzene = self.df["benzene"]
+        # Data.dropna(
+        #     axis=0,
+        #     inplace=True
+        # )
+        print(Data.head(50))
+        Data = Data.groupby(Data.index.to_frame(
+        ).Datetime.dt.to_period('D')).agg('sum')
+        print(Data.head(50))
+        Data.plot()
+        plt.title("Daily Benzene level for" + ' ' + self.Year)
+        plt.xlabel("Daily")
+        plt.ylabel("Benzene emmision")
+        plt.show()
+
+    def Weekly(self):
+        Data = self.df["benzene"]
+        Date = self.df.index
+        Benzene = self.df["benzene"]
+        # Data.dropna(
+        #     axis=0,
+        #     inplace=True
+        # )
+        print(Data.head(50))
+        Data = Data.groupby(Data.index.to_frame(
+        ).Datetime.dt.to_period('W')).agg('sum')
+        Data.plot()
+        plt.title("Weekly Benzene level for" + ' ' + self.Year)
+        plt.xlabel("Weekly")
+        plt.ylabel("Benzene emmision")
+        plt.show()
+
+    def Monthly(self):
+        Data = self.df["benzene"]
+        Date = self.df.index
+        Benzene = self.df["benzene"]
+        # Data.dropna(
+        #     axis=0,
+        #     inplace=True
+        # )
+        print(Data.head(50))
+        Data = Data.groupby(Data.index.to_frame(
+        ).Datetime.dt.to_period('M')).agg('sum')
+        Data.plot()
+        plt.title("Monthly Benzene level for" + ' ' + self.Year)
+        plt.xlabel("Month")
+        plt.ylabel("Benzene emmision")
+        plt.show()
