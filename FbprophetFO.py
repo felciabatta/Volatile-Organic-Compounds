@@ -1,12 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime
-import pandas as pd
 from prophet import Prophet
-from prophet.plot import plot_plotly, plot_components_plotly
-from prophet.plot import add_changepoints_to_plot
 from DataSelect import vocData
-from prophet.plot import plot_yearly, plot_weekly, plot_seasonality
 import numpy as np
 
 data = vocData()
