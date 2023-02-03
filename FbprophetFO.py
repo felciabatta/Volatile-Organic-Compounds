@@ -91,9 +91,9 @@ class FbProphetCorrelation():
         return correlation, percent_change
 
 CombinationOne = FbProphetCorrelation('benzene','toluene')
-m, components = CombinationOne.fit(log=True, plot=False, groupby='D')
+m, components = CombinationOne.fit(log=True, plot=True, groupby='D')
 BenTolCorr, pchange = CombinationOne.Correlation(
-    components[0][['ds','weekly']], components[1][['ds','weekly']], log=True, plot=False)
+    components[0][['ds','weekly']], components[1][['ds','weekly']], log=True, plot=True)
 
 
 #m = Prophet(weekly_seasonality=False) 
