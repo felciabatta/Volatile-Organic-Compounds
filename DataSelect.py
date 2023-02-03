@@ -10,6 +10,7 @@ import seaborn as sns
 
 import pickle
 from typing import List, Union, Literal
+import warnings
 
 
 class vocData():
@@ -179,6 +180,7 @@ class vocData():
         return data[loc]
 
     def fit(self, *dataselect_args, voc='benzene', log=False, plot=False, save=False, **dataselect_kwargs):
+        warnings.filterwarnings("ignore")
         # set groupby variable
         if 'groupby' in dataselect_kwargs.keys():
             groupby = dataselect_kwargs['groupby']
@@ -223,6 +225,8 @@ class vocData():
             components.to_csv('Results/'+voc+'_components_fittedby_'+groupby+'.csv', na_rep="NaN")
             with open('Results/'+voc+'_model_fittedby_'+groupby+'.pkl', 'wb') as outp:
                 pickle.dump(m, outp, pickle.HIGHEST_PROTOCOL)
+
+        warnings.filterwarnings("always")
         return m, components
 
     def pct_corr(self, fitted_data1, fitted_data2, log=False, plot=False, pct_freq='D'):
