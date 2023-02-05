@@ -230,6 +230,10 @@ class vocData():
         return m, components
 
     def pct_corr(self, fitted_data1, fitted_data2, log=False, plot=False, pct_freq='D'):
+        """Perform percentage correlation on a pair of prophet-fitted time series.
+        
+        Data input must have two columns: `'ds'` the datetime column, and a second for the values."""
+
         # set datetime index, if needed
         if 'ds' in fitted_data1.columns:
             fitted_data1 = fitted_data1.set_index(['ds'])
