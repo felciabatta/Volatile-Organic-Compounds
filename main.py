@@ -14,12 +14,15 @@ for voc in VOCS:
 
 # %% CORRELATE from COMPONENTS
 
-component_files = ['Results/'+voc+'_components_fittedby_D.csv' for voc in VOCS]
+seasonality = 'trend'
+time_unit = 'H'
+
+component_files = ['Results/'+voc+'_components_fittedby_'+time_unit+'.csv' for voc in VOCS]
 component_frames = [pd.read_csv(file, index_col=0) for file in component_files]
 C = np.empty((len(VOCS), len(VOCS)))
 for i, df1 in enumerate(component_frames):
     for j, df2 in enumerate(component_frames):
-        cols = ['ds', 'trend']
+        cols = ['ds', seasonality]
         C[i, j], _ = data.pct_corr(df1[cols], df2[cols], log=True)
 
 sns.heatmap(C, cmap='coolwarm', vmin=-1, vmax=1, xticklabels=VOCS, yticklabels=VOCS)
