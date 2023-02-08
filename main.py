@@ -1,4 +1,4 @@
-from DataSelect import vocData, VOCS
+from DataSelect import vocData, VOCS, unpickle
 
 import pandas as pd
 import numpy as np
@@ -12,13 +12,18 @@ for voc in VOCS:
     data.fit(voc=voc, log=True, save=True, groupby='H');
 
 
-# %% CORRELATE from COMPONENTS
+# %% EXTRACT COMPONENTS and MODELS
 
 seasonality = 'daily'
 time_unit = 'H'
 
 component_files = ['Results/'+voc+'_components_fittedby_'+time_unit+'.csv' for voc in VOCS]
-component_frames = [pd.read_csv(file, index_col=0) for file in component_files]
+component_frames = [pd.read_csv(file, index_col=0, parse_dates=[1]) for file in component_files]
+
+model_files = ['Results/'+voc+'_model_fittedby_'+time_unit+'.pkl' for voc in VOCS]
+models = [unpickle(file) for file in model_files]
+
+# %% CORRELATE from COMPONENTS
 C = np.empty((len(VOCS), len(VOCS)))
 for i, df1 in enumerate(component_frames):
     for j, df2 in enumerate(component_frames):
@@ -32,3 +37,9 @@ VOCS_sorted = np.array(VOCS)[sort_index].tolist()
 # sns.heatmap(C, cmap='coolwarm', vmin=-1, vmax=1, xticklabels=VOCS, yticklabels=VOCS)
 # plt.figure()
 sns.heatmap(C_sorted, cmap='coolwarm', vmin=-1, vmax=1, xticklabels=VOCS_sorted, yticklabels=VOCS_sorted)
+
+# %% MAKE PROPHET PLOTS from MODELS
+
+for i, m in enumerate(models):
+    m.plot(component_frames[i])
+    m.plot_components(component_frames[i])
