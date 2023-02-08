@@ -223,8 +223,8 @@ class vocData():
         # save
         if save:
             components.to_csv('Results/'+voc+'_components_fittedby_'+groupby+'.csv', na_rep="NaN")
-            with open('Results/'+voc+'_model_fittedby_'+groupby+'.pkl', 'wb') as outp:
-                pickle.dump(m, outp, pickle.HIGHEST_PROTOCOL)
+            with open('Results/'+voc+'_model_fittedby_'+groupby+'.pkl', 'wb') as file:
+                pickle.dump(m, file, pickle.HIGHEST_PROTOCOL)
 
         warnings.filterwarnings("always")
         return m, components
@@ -379,6 +379,12 @@ def notNon(item):
 
 def no(item):
     return item is None
+
+
+def unpickle(filename):
+        with open(filename, 'rb') as file:
+            obj = pickle.load(file)
+        return obj
 
 
 VOCS = ['Nitric oxide',
