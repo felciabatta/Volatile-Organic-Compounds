@@ -3,6 +3,7 @@ from DataSelect import vocData, VOCS, unpickle
 import pandas as pd
 import numpy as np
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 # initialise vocData
 data = vocData()
@@ -13,9 +14,8 @@ for voc in VOCS:
 
 
 # %% EXTRACT COMPONENTS and MODELS
-
 seasonality = 'daily'
-time_unit = 'H'
+time_unit = 'D'
 
 component_files = ['Results/'+voc+'_components_fittedby_'+time_unit+'.csv' for voc in VOCS]
 component_frames = [pd.read_csv(file, index_col=0, parse_dates=[1]) for file in component_files]
@@ -39,7 +39,16 @@ VOCS_sorted = np.array(VOCS)[sort_index].tolist()
 sns.heatmap(C_sorted, cmap='coolwarm', vmin=-1, vmax=1, xticklabels=VOCS_sorted, yticklabels=VOCS_sorted)
 
 # %% MAKE PROPHET PLOTS from MODELS
-
 for i, m in enumerate(models):
-    m.plot(component_frames[i])
-    m.plot_components(component_frames[i])
+    plot_fit = m.plot(component_frames[i])
+    plt.title(VOCS[i])
+    plt.tight_layout()
+    
+    plot_components = m.plot_components(component_frames[i])
+    plot_components.axes[0].set_title(VOCS[i])
+    plt.tight_layout()
+
+    prefix = 'Figures/Regression/'+VOCS[i]
+    suffix = '_fittedby_'+time_unit+'.pdf'
+    plot_fit.figure.savefig(prefix+'_yhat'+suffix)
+    plot_components.figure.savefig(prefix+'_components'+suffix)
