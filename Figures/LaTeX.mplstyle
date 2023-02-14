@@ -1,0 +1,59 @@
+# MPL STYLE SHEET FOR LATEX STYLE PLOTS
+
+# FONT
+font.family: serif
+font.serif: NewComputerModern10
+font.sans-serif: NewComputerModernSans10
+font.monospace: NewComputerModernMono10
+# mathtext.fontset: cm
+
+# TEXT
+axes.unicode_minus: True
+# text.usetex: True
+
+axes.titley: 1.0
+axes.titlesize: 14
+axes.labelsize: 12
+xtick.labelsize: 8
+ytick.labelsize: 8
+
+axes.formatter.use_mathtext: True
+axes.formatter.limits: -3, 3
+
+# AXES
+axes.linewidth: 0.4
+axes.facecolor: white
+
+# TICKS
+xtick.major.width: 0.4
+ytick.major.width: 0.4
+
+xtick.direction: in
+ytick.direction: in
+
+# FIGURE
+figure.figsize: 5, 3
+figure.autolayout: True #'tight_layout'
+savefig.format: pdf
+savefig.bbox: tight
+savefig.pad_inches: 0
+savefig.dpi: 600
+
+# GRID
+grid.linewidth: 0.4
+grid.color: e2e2e2
+
+# LINES
+lines.linewidth: 1
+# MARKERS
+lines.markersize: 2
+
+# LEGEND
+legend.loc: best
+legend.markerscale: 10
+legend.fontsize: 8
+legend.framealpha: 0.95
+legend.handletextpad: 0.2
+legend.handlelength: 1.0
+
+# COLOURS
