@@ -186,18 +186,20 @@ class vocData():
             groupby = dataselect_kwargs['groupby']
         else:
             groupby = 'H'
-        
+
         # prepare dataframe
-        data = self.select(*dataselect_args, **dataselect_kwargs)[voc].to_frame()
-        data['ds'] = data.index.to_series() # create ds col
-        data = data.rename({voc: 'y'}, axis='columns') # rename data col
-        data = data[['ds','y']] # extract relevant cols
+        data = self.select(
+            *dataselect_args, **dataselect_kwargs)[voc].to_frame()
+        data['ds'] = data.index.to_series()  # create ds col
+        data = data.rename({voc: 'y'}, axis='columns')  # rename data col
+        data = data[['ds', 'y']]  # extract relevant cols
         # log data if specified
         if log:
             data['y'] = np.log(data['y'])
 
         # initiate model in prophet
-        m = Prophet(yearly_seasonality=6, weekly_seasonality=3, daily_seasonality=False)
+        m = Prophet(yearly_seasonality=6, weekly_seasonality=3,
+                    daily_seasonality=False)
         # add daily seasonality if possible
         if groupby == 'H':
             m.add_seasonality(name='daily', period=1, fourier_order=5)
@@ -206,7 +208,7 @@ class vocData():
         m.fit(data)
 
         # generate daterane
-        ds = m.history.ds # original (incomplete) dates
+        ds = m.history.ds  # original (incomplete) dates
         daterange = pd.date_range(min(ds), max(ds), freq='D').to_frame()
         daterange.columns = ['ds']
 
@@ -222,16 +224,17 @@ class vocData():
 
         # save
         if save:
-            components.to_csv('Results/'+voc+'_components_fittedby_'+groupby+'.csv', na_rep="NaN")
+            components.to_csv(
+                'Results/'+voc+'_components_fittedby_'+groupby+'.csv', na_rep="NaN")
             with open('Results/'+voc+'_model_fittedby_'+groupby+'.pkl', 'wb') as file:
                 pickle.dump(m, file, pickle.HIGHEST_PROTOCOL)
 
         warnings.filterwarnings("always")
         return m, components
 
-    def pct_corr(self, fitted_data1, fitted_data2, log=False, plot=False, pct_freq='D'):
+    def pct_corr(self, fitted_data1, fitted_data2, log=False, plot=False, pct_freq='D', daterange=None):
         """Perform percentage correlation on a pair of prophet-fitted time series.
-        
+
         Data input must have two columns: `'ds'` the datetime column, and a second for the values."""
 
         # set datetime index, if needed
@@ -244,6 +247,12 @@ class vocData():
         fitted_data1.columns = ['col1']
         fitted_data2.columns = ['col2']
         percent_change = pd.concat([fitted_data1, fitted_data2], axis=1)
+
+        # select date range
+        if notNon(daterange):
+            dateslice = slice(daterange[0], daterange[1])
+            percent_change = percent_change.loc[dateslice]
+
         # percent_change.dropna(inplace=True)
         # find percent change
         if not log:
@@ -259,7 +268,7 @@ class vocData():
             # plot
             plt.figure()
             plt.scatter(percent_change.col1, percent_change.col2)
-            
+
             plt.figure()
             plt.plot(percent_change.col1)
 
@@ -382,9 +391,9 @@ def no(item):
 
 
 def unpickle(filename):
-        with open(filename, 'rb') as file:
-            obj = pickle.load(file)
-        return obj
+    with open(filename, 'rb') as file:
+        obj = pickle.load(file)
+    return obj
 
 
 VOCS = ['Nitric oxide',
@@ -428,6 +437,7 @@ VOCS = ['Nitric oxide',
 
 class _Plot:
     """DEPRECATED"""
+
     def __init__(self, Year, View):
         self.Year = Year
         self.View = View
