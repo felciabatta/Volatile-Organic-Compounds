@@ -17,7 +17,7 @@ for voc in VOCS:
     data.fit(voc=voc, log=True, save=True, groupby='W')
 
 # %% EXTRACT COMPONENTS and MODELS
-seasonality = 'trend'
+seasonality = 'weekly'
 time_unit = 'H'
 
 component_files = ['Results/'+voc+'_components_fittedby_' +
@@ -46,11 +46,14 @@ VOC_labels = [voc.title() for voc in VOCS_sorted]
 # sns.heatmap(C, cmap='coolwarm', vmin=-1, vmax=1, xticklabels=VOCS, yticklabels=VOCS)
 # plt.figure()
 map = sns.heatmap(C_sorted, cmap='coolwarm', vmin=-1, vmax=1, yticklabels=VOC_labels,
-                  xticklabels=[], cbar=True, linecolor="face", square=True)
+                  xticklabels=[], cbar=False, linecolor="face", square=True)
 map.figure.tight_layout()
 map.set_title((seasonality+" correlations").title())
 map.tick_params(length=0)
-map.figure.axes[1].tick_params(length=0)
+try:
+    map.figure.axes[1].tick_params(length=0)
+except:
+    pass
 
 # %% SAVE CORRMATS
 map.figure.savefig("Figures/pct_corrs/pctcorr_" +
