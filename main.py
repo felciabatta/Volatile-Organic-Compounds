@@ -17,7 +17,7 @@ for voc in VOCS:
     data.fit(voc=voc, log=True, save=True, groupby='W')
 
 # %% EXTRACT COMPONENTS and MODELS
-seasonality = 'weekly'
+seasonality = 'yearly'
 time_unit = 'H'
 
 component_files = ['Results/'+voc+'_components_fittedby_' +
@@ -79,22 +79,27 @@ for i, m in enumerate(models):
         component_frames[i], figsize=(6*.8, 7*.8))
     axes = plot_components.axes
     axes[0].set_title(title+" Components")
-    try:
-        axes[1].set_xticklabels(
-            ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
-    except:
-        pass
-    try:
-        axes[1].set_xticklabels(
-            ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
-    except:
-        pass
+
+    week_ticks = axes[1].get_xticks()
+    week_ticks = np.linspace(week_ticks[0], week_ticks[-1], 8)
+    axes[1].set_xticklabels(
+        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+
+    year_ticks = axes[2].get_xticks()
+    year_ticks = np.linspace(year_ticks[0], year_ticks[-1], 13)
+    axes[2].set_xticks(year_ticks)
     axes[2].set_xticklabels(
-        ["Jan", "Feb", "Mar", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"])
+        ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan"])
+
     axes[0].set_xlabel(r"Time, $t$ years", usetex=True)
     axes[1].set_xlabel(r"Day of Week")
     axes[2].set_xlabel(r"Day of Year")
+
     try:
+        day_ticks = axes[3].get_xticks()
+        day_ticks = np.linspace(day_ticks[0], day_ticks[-1], 7)
+        axes[3].set_xticks(day_ticks)
         axes[3].set_xlabel(r"Hour of Day")
     except:
         pass
